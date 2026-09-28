@@ -85,3 +85,8 @@ desktop.ini
 *.db
 *.pid
 *.seed
+
+# ===== 本地一键流程产物 =====
+.run-logs/
+.setup-stamp/
+backend/.npm-cache.tmp.*/

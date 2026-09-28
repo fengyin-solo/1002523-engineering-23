@@ -1,0 +1,12 @@
+.venv/
+.venv.bak.*/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+*.log
+.git/
+.gitignore
+Dockerfile
+.dockerignore
+README.md

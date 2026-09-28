@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from app.config import settings
+from app.seed_loader import SeedError, read_seed_rows, upsert_rows
 from app.store import store
 
 MODULE = "fuse"
@@ -59,3 +61,13 @@ class FuseService:
         entry["pending"] = target != STATUS_ORDER[-1]
         entry["abnormal"] = action in NEGATIVE_ACTIONS
         return entry, f"熔断器已{action}"
+
+    def reseed(self, seed_file: str | None = None) -> dict[str, Any]:
+        """重新导入熔断器示例数据：按熔断器编号覆盖，不追加。
+
+        启动时和上线后调用的是同一个方法，保证两边数据口径一致。
+        """
+        seed_rows = read_seed_rows(seed_file or settings.fuse_seed_file)
+        rows, stats = upsert_rows(store.rows(MODULE), seed_rows)
+        store.replace_rows(MODULE, rows)
+        return {"total": len(rows), **stats}

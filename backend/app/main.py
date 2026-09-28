@@ -5,14 +5,27 @@
 """
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.routers import ROUTERS
+from app.seed_loader import SeedError
+from app.services.fuse import FuseService
 from app.store import store
 
-app = FastAPI(title="轨道交通信号检修管理平台", version="1.0.0")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # 启动即装载熔断器示例数据：本地与部署同一入口、同一数据文件，
+    # 装载按熔断器编号覆盖，可重复执行。数据有问题直接启动失败，不留下缺料环境。
+    FuseService().reseed()
+    yield
+
+
+app = FastAPI(title="轨道交通信号检修管理平台", version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
