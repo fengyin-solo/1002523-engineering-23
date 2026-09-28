@@ -29,7 +29,12 @@ for module in ROUTERS:
 @app.get("/api/health")
 def health() -> dict[str, object]:
     """健康检查：确认服务已经监听、示例数据已经就绪。"""
-    return {"ok": True, "app": settings.app_name, "modules": len(store.module_names())}
+    return {
+        "ok": True,
+        "app": settings.app_name,
+        "env": settings.env,
+        "modules": len(store.module_names()),
+    }
 
 
 @app.get("/api/overview")

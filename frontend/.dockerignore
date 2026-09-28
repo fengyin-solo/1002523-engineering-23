@@ -1,0 +1,9 @@
+# node_modules 里有平台相关的原生依赖（如 esbuild 的二进制），
+# 本机装的不能进镜像，前端依赖必须在镜像构建时由 npm install 重新安装。
+node_modules/
+dist/
+.vite/
+.git/
+.gitignore
+.DS_Store
+*.log

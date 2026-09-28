@@ -59,6 +59,8 @@ pnpm-debug.log*
 .env.*.local
 *.env
 !.env.example
+# config/settings.env 是本地脚本与部署脚本共用的配置来源，必须随仓库分发，不忽略
+!config/settings.env
 
 # ===== 测试覆盖率 =====
 coverage/

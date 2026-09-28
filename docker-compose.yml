@@ -1,13 +1,21 @@
+# 部署配置与本地脚本共用 config/settings.env（env_file 注入容器环境，
+# ${...} 插值由 scripts/deploy.sh source 同一文件后提供），不要再在这里
+# 写第二份端口/环境配置。
 services:
   backend:
     build: ./backend
+    env_file:
+      - config/settings.env
     ports:
-      - "8000:8000"
-    environment:
-      - APP_ENV=local
+      - "${BACKEND_PORT:-8000}:8000"
   frontend:
     build: ./frontend
+    env_file:
+      - config/settings.env
+    environment:
+      # 容器内 vite 把 /api 代理到后端容器，而不是容器自己的 127.0.0.1
+      - VITE_PROXY_TARGET=http://backend:8000
     ports:
-      - "5173:5173"
+      - "${FRONTEND_PORT:-5173}:5173"
     depends_on:
       - backend

@@ -6,6 +6,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Query
 
 from app.schemas import ActionResult, EntryPayload, PageResult
+from app.seed import load_fuse_seed_rows
 from app.services.fuse import FuseService
 
 router = APIRouter(prefix="/api/fuse", tags=["熔断器管理"])
@@ -63,3 +64,30 @@ def export_entries() -> dict[str, Any]:
     """导出熔断器管理清单：返回当前过滤条件下的全量数据。"""
     items, total = service.list_entries(page=1, size=10000)
     return {"module": "fuse", "total": total, "items": items}
+
+
+@router.post("/import")
+def import_entries() -> dict[str, Any]:
+    """从服务器端种子文件（FUSE_SEED_FILE）重新导入熔断器示例数据。
+
+    按熔断器编号整行覆盖，重复导入不会追加重复记录；文件缺失/格式错误会
+    直接 500 并说明卡在哪，不返回一份看似成功的空结果。
+    """
+    try:
+        rows = load_fuse_seed_rows()
+    except RuntimeError as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+    created, updated, bad_rows = service.import_entries(rows)
+    if bad_rows:
+        raise HTTPException(
+            status_code=400,
+            detail=f"种子文件第 {'、'.join(bad_rows)} 行缺少熔断器编号，已整批放弃导入",
+        )
+    total = service.list_entries(page=1, size=10000)[1]
+    return {
+        "ok": True,
+        "message": f"熔断器示例数据已按编号覆盖导入（新增 {created} 条，覆盖 {updated} 条）",
+        "created": created,
+        "updated": updated,
+        "total": total,
+    }

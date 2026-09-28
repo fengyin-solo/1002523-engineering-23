@@ -1,7 +1,30 @@
-"""示例数据：每个模块给几条不同状态的记录，方便起服务后立刻看到内容。"""
+"""示例数据：每个模块给几条不同状态的记录，方便起服务后立刻看到内容。
+
+熔断器模块的数据不内嵌在这里，统一从 backend/data/fuse.json 读取（路径由
+FUSE_SEED_FILE 指定），本地启动与部署构建共用同一份数据源，保证两边跑出来的
+熔断器数据一致。
+"""
 from __future__ import annotations
 
+import json
 from typing import Any
+
+from app.config import settings
+
+
+def load_fuse_seed_rows() -> list[dict[str, Any]]:
+    """读取熔断器示例数据；文件缺失或格式不对时给出明确报错，不静默用空数据顶替。"""
+    path = settings.fuse_seed_path
+    if not path.is_file():
+        raise RuntimeError(f"熔断器示例数据文件不存在：{path}（由 FUSE_SEED_FILE 指定）")
+    try:
+        rows = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(f"熔断器示例数据文件 {path} 不是合法 JSON：{exc}") from exc
+    if not isinstance(rows, list) or not all(isinstance(row, dict) for row in rows):
+        raise RuntimeError(f"熔断器示例数据文件 {path} 应为 JSON 数组，元素为对象")
+    return [dict(row) for row in rows]
+
 
 SEED_ROWS: dict[str, list[dict[str, Any]]] = {
     "interlock": [{'id': 1,
@@ -436,42 +459,7 @@ SEED_ROWS: dict[str, list[dict[str, Any]]] = {
   '检修日期': '2026-09-03',
   '下次检修日': '继电器检修样例3',
   '继电器状态': '继电器检修样例3'}],
-    "fuse": [{'id': 1,
-  'status': '正常',
-  'pending': True,
-  'abnormal': False,
-  '熔断器编号': 'FUSE-0001',
-  '额定电流': '熔断器管理样例1',
-  '安装位置': '熔断器管理样例1',
-  '保护范围': '熔断器管理样例1',
-  '熔断记录': '熔断器管理样例1',
-  '更换日期': '2026-09-01',
-  '备件存量': '熔断器管理样例1',
-  '熔断器状态': '熔断器管理样例1'},
- {'id': 2,
-  'status': '已熔断',
-  'pending': True,
-  'abnormal': True,
-  '熔断器编号': 'FUSE-0002',
-  '额定电流': '熔断器管理样例2',
-  '安装位置': '熔断器管理样例2',
-  '保护范围': '熔断器管理样例2',
-  '熔断记录': '熔断器管理样例2',
-  '更换日期': '2026-09-02',
-  '备件存量': '熔断器管理样例2',
-  '熔断器状态': '熔断器管理样例2'},
- {'id': 3,
-  'status': '备件不足',
-  'pending': False,
-  'abnormal': False,
-  '熔断器编号': 'FUSE-0003',
-  '额定电流': '熔断器管理样例3',
-  '安装位置': '熔断器管理样例3',
-  '保护范围': '熔断器管理样例3',
-  '熔断记录': '熔断器管理样例3',
-  '更换日期': '2026-09-03',
-  '备件存量': '熔断器管理样例3',
-  '熔断器状态': '熔断器管理样例3'}],
+    "fuse": load_fuse_seed_rows(),
     "lightning": [{'id': 1,
   'status': '防护有效',
   'pending': True,

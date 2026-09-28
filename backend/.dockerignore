@@ -1,0 +1,12 @@
+# 构建镜像时不要把本机开发产物拷进去：
+# - .venv 是宿主机 Python 版本建的（如 3.12 解释器软链），拷进去会跑不起来；
+# - __pycache__ 是旧字节码，可能与镜像内 Python 版本不一致；
+# - data/fuse.json 是要打进镜像的，不要在本文件里忽略它。
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.git/
+.gitignore
+.DS_Store
+*.log
